@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AI Productivity Platform"
+description = "A modern AI productivity platform with a landing page, user authentication, dashboard, credits system, daily login rewards, streak tracking, favorites, saved history, and 5 built-in tools: QR Code Generator, Password Generator, Word Counter, Resume Builder, and Invoice Generator. Designed to maximize user retention through gamification."
+version = "1.0.0"
+id = "artifacts/ai-productivity"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20790
+
+[services.development]
+run = "pnpm --filter @workspace/ai-productivity run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ai-productivity", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ai-productivity/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20790"
+BASE_PATH = "/"

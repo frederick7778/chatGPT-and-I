@@ -3,20 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Productivity Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User profile
+  - name: credits
+    description: Credits system
+  - name: streaks
+    description: Daily streak and rewards
+  - name: tools
+    description: Tool catalog
+  - name: history
+    description: Tool usage history
+  - name: favorites
+    description: Favorite tools
+  - name: dashboard
+    description: Dashboard summaries
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +39,411 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Users
+  /users/profile:
+    patch:
+      operationId: updateProfile
+      tags: [users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Credits
+  /credits:
+    get:
+      operationId: getCredits
+      tags: [credits]
+      summary: Get current user's credit balance
+      responses:
+        "200":
+          description: Credit balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditBalance"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /credits/transactions:
+    get:
+      operationId: getCreditTransactions
+      tags: [credits]
+      summary: Get credit transaction history
+      responses:
+        "200":
+          description: Credit transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreditTransaction"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Streaks
+  /streaks:
+    get:
+      operationId: getStreak
+      tags: [streaks]
+      summary: Get current user's streak info
+      responses:
+        "200":
+          description: Streak info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /streaks/checkin:
+    post:
+      operationId: dailyCheckin
+      tags: [streaks]
+      summary: Perform daily check-in to earn credits and extend streak
+      responses:
+        "200":
+          description: Checkin result with rewards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckinResult"
+        "400":
+          description: Already checked in today
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Tools
+  /tools:
+    get:
+      operationId: listTools
+      tags: [tools]
+      summary: List all available tools
+      responses:
+        "200":
+          description: Tools list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+
+  /tools/{toolSlug}:
+    get:
+      operationId: getTool
+      tags: [tools]
+      parameters:
+        - name: toolSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      summary: Get a specific tool by slug
+      responses:
+        "200":
+          description: Tool
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+        "404":
+          description: Tool not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # History
+  /history:
+    get:
+      operationId: listHistory
+      tags: [history]
+      summary: Get current user's tool usage history
+      responses:
+        "200":
+          description: History entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: createHistory
+      tags: [history]
+      summary: Save a tool usage result to history
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HistoryInput"
+      responses:
+        "201":
+          description: Created history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /history/{id}:
+    delete:
+      operationId: deleteHistory
+      tags: [history]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      summary: Delete a history entry
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Favorites
+  /favorites:
+    get:
+      operationId: listFavorites
+      tags: [favorites]
+      summary: List user's favorite tools
+      responses:
+        "200":
+          description: Favorite tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Favorite"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites/{toolSlug}:
+    post:
+      operationId: addFavorite
+      tags: [favorites]
+      parameters:
+        - name: toolSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      summary: Add a tool to favorites
+      responses:
+        "201":
+          description: Favorited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Favorite"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: removeFavorite
+      tags: [favorites]
+      parameters:
+        - name: toolSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      summary: Remove a tool from favorites
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Dashboard
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary - stats, streak, credits, recent history, favorites
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +454,227 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    # Auth
+    RegisterInput:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+          minLength: 1
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+
+    # User
+    User:
+      type: object
+      required: [id, email, name, createdAt]
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+
+    # Credits
+    CreditBalance:
+      type: object
+      required: [balance, totalEarned, totalSpent]
+      properties:
+        balance:
+          type: number
+        totalEarned:
+          type: number
+        totalSpent:
+          type: number
+
+    CreditTransaction:
+      type: object
+      required: [id, amount, type, description, createdAt]
+      properties:
+        id:
+          type: number
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [earn, spend]
+        description:
+          type: string
+        createdAt:
+          type: string
+
+    # Streak
+    StreakInfo:
+      type: object
+      required: [currentStreak, longestStreak, lastCheckinDate, checkedInToday, totalCheckins]
+      properties:
+        currentStreak:
+          type: number
+        longestStreak:
+          type: number
+        lastCheckinDate:
+          type: ["string", "null"]
+        checkedInToday:
+          type: boolean
+        totalCheckins:
+          type: number
+
+    CheckinResult:
+      type: object
+      required: [creditsEarned, newStreak, newBalance, message]
+      properties:
+        creditsEarned:
+          type: number
+        newStreak:
+          type: number
+        newBalance:
+          type: number
+        message:
+          type: string
+        isStreakMilestone:
+          type: boolean
+
+    # Tools
+    Tool:
+      type: object
+      required: [slug, name, description, category, creditsPerUse, icon]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        creditsPerUse:
+          type: number
+        icon:
+          type: string
+        isNew:
+          type: boolean
+        isPremium:
+          type: boolean
+        usageCount:
+          type: number
+
+    # History
+    HistoryEntry:
+      type: object
+      required: [id, toolSlug, toolName, input, output, createdAt]
+      properties:
+        id:
+          type: number
+        toolSlug:
+          type: string
+        toolName:
+          type: string
+        input:
+          type: string
+        output:
+          type: string
+        createdAt:
+          type: string
+
+    HistoryInput:
+      type: object
+      required: [toolSlug, input, output]
+      properties:
+        toolSlug:
+          type: string
+        input:
+          type: string
+        output:
+          type: string
+
+    # Favorites
+    Favorite:
+      type: object
+      required: [id, toolSlug, tool, createdAt]
+      properties:
+        id:
+          type: number
+        toolSlug:
+          type: string
+        tool:
+          $ref: "#/components/schemas/Tool"
+        createdAt:
+          type: string
+
+    # Dashboard
+    DashboardSummary:
+      type: object
+      required: [user, credits, streak, recentHistory, favoriteTools, toolsUsedCount, totalToolRuns]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        credits:
+          $ref: "#/components/schemas/CreditBalance"
+        streak:
+          $ref: "#/components/schemas/StreakInfo"
+        recentHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/HistoryEntry"
+        favoriteTools:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tool"
+        toolsUsedCount:
+          type: number
+        totalToolRuns:
+          type: number
